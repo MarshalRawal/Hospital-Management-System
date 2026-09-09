@@ -30,17 +30,14 @@
         }
 
         .nav-brand {
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #0f172a;
+            color: #2563eb;
+            /* Matches CareConnect Blue */
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
-
-        .nav-brand span {
-            color: #2563eb;
         }
 
         .nav-links {
@@ -82,12 +79,15 @@
 
 <body>
     <nav class="navbar">
-        <a href="patient_dashboard.php" class="nav-brand">Care<span>Connect</span></a>
+        <a href="patient_dashboard.php" class="nav-brand">🏥 CareConnect</a>
         <div class="nav-links">
             <a href="patient_dashboard.php" class="nav-link">Dashboard</a>
             <a href="book_appointment.php" class="nav-link">Appointments</a>
             <a href="medical_records.php" class="nav-link">Diagnoses & Prescriptions</a>
             <a href="profile.php" class="nav-link">My Profile</a>
-            <a href="index.php" class="btn-logout">Log Out</a>
+            <a href="login.php" class="btn-logout">Log Out</a>
         </div>
     </nav>
+</body>
+
+</html>

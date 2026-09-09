@@ -155,11 +155,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_login'])) {
         height: 20px;
     }
 
-    .btn-solid {
-        width: 100%;
-        margin-top: 1rem;
-        padding: 0.85rem;
-    }
 
     .alert {
         padding: 1rem;
@@ -189,6 +184,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_login'])) {
 
     .signup-link a:hover {
         text-decoration: underline;
+    }
+    /* Unique class just for the Login Submit button */
+    .login-submit-btn {
+        width: 100%;
+        margin-top: 1rem;
+        padding: 0.85rem;
+        background-color: #2563eb;
+        color: #ffffff;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .login-submit-btn:hover {
+        background-color: #1d4ed8;
     }
 </style>
 
@@ -222,7 +235,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_login'])) {
                 </button>
             </div>
 
-            <button type="submit" name="submit_login" class="btn btn-solid">Secure Log In &rarr;</button>
+            <button type="submit" name="submit_login" class="btn login-submit-btn ">Secure Log In &rarr;</button>
 
             <div class="signup-link">
                 Don't have an account? <a href="register.php">Create one here</a>

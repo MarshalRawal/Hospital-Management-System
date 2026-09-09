@@ -61,6 +61,7 @@
         }
 
         /* Fixed Button CSS */
+        /* Fixed Button CSS */
         .btn {
             padding: 0.6rem 1.25rem;
             border-radius: 6px;
@@ -70,7 +71,7 @@
             text-decoration: none;
             cursor: pointer;
             white-space: nowrap;
-            display: inline-flex;
+            display: flex; /* Changed from inline-flex */
             align-items: center;
             justify-content: center;
         }
@@ -93,6 +94,7 @@
 
         a.btn-solid:hover {
             background-color: #1d4ed8;
+            color: white;
             border-color: #1d4ed8;
         }
 
@@ -109,7 +111,7 @@
         <a href="index.php" class="logo">🏥 CareConnect</a>
         <div class="nav-links">
             <a href="index.php">Home</a>
-            <a href="#">About</a>
+            <a href="about.php">About</a>
             <a href="login.php" class="btn btn-outline">Log In</a>
             <a href="register.php" class="btn btn-solid">Register</a>
         </div>

@@ -4,7 +4,8 @@ require_once 'db_connect.php';
 
 $message = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])) {
+// FIXED: Changed 'submit_registration' to 'submit_register' to match the HTML button name
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_register'])) {
 
     // 1. Capture Form Data
     $first_name = $_POST['first_name'];
@@ -19,25 +20,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     // 2. Hash the password for security
     $hashed_password = password_hash($raw_password, PASSWORD_DEFAULT);
 
-    // 3. Begin Transaction (Crucial for relational databases)
+    // 3. Begin Transaction
     $conn->begin_transaction();
 
     try {
-        // Step A: Insert login credentials into the `users` table
-        // Note: Assuming a 'role' column exists, defaulting to 'patient'
         $stmt1 = $conn->prepare("INSERT INTO users (email, password, role) VALUES (?, ?, 'patient')");
         $stmt1->bind_param("ss", $email, $hashed_password);
         $stmt1->execute();
 
-        // Step B: Retrieve the auto-generated ID of that new user
         $new_user_id = $conn->insert_id;
 
-        // Step C: Insert profile data into the `patients` table, linking it via user_id
         $stmt2 = $conn->prepare("INSERT INTO patients (user_id, first_name, last_name, date_of_birth, gender, blood_group, contact) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt2->bind_param("issssss", $new_user_id, $first_name, $last_name, $dob, $gender, $blood_group, $contact);
         $stmt2->execute();
 
-        // Step D: If both queries succeeded, commit the changes permanently
         $conn->commit();
 
         $message = "<div style='color: #166534; background-color: #dcfce3; padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; border: 1px solid #bbf7d0;'>Account created successfully! You can now log in.</div>";
@@ -45,7 +41,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         $stmt1->close();
         $stmt2->close();
     } catch (Exception $e) {
-        // If anything fails, rollback the entire transaction to prevent orphan records
         $conn->rollback();
         $message = "<div style='color: #991b1b; background-color: #fee2e2; padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1.5rem; border: 1px solid #fecaca;'>Registration Failed: " . $e->getMessage() . "</div>";
     }
@@ -140,6 +135,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     }
 
+    /* Inline Error Message Styling */
+    .error-msg {
+        color: #ef4444;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-top: 0.4rem;
+        display: none;
+        /* Hidden by default */
+    }
+
     .toggle-password {
         position: absolute;
         right: 12px;
@@ -175,23 +180,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
         border-bottom: 1px solid #e2e8f0;
     }
 
-    .button-group {
-        grid-column: span 2;
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-
     @media (max-width: 640px) {
         .form-grid {
             grid-template-columns: 1fr;
-        }
-
-        .full-width,
-        .section-title,
-        .button-group {
-            grid-column: span 1;
         }
 
         .register-wrapper {
@@ -202,6 +193,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             padding: 1.5rem;
         }
     }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1.5rem;
+        width: 100%;
+        grid-column: span 2;
+    }
+
+    .register-cancel-btn {
+        width: 47%;
+        padding: 0.85rem;
+        background-color: #ef4444;
+        color: #ffffff;
+        border: 1px solid #ef4444;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .register-cancel-btn:hover {
+        background-color: #dc2626;
+    }
+
+    .register-submit-btn {
+        width: 47%;
+        padding: 0.85rem;
+        background-color: #2563eb;
+        color: #ffffff;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        text-align: center;
+    }
+
+    .register-submit-btn:hover {
+        background-color: #1d4ed8;
+    }
 </style>
 
 <div class="register-wrapper">
@@ -211,7 +249,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
             <p>Fill in your details below to join the system.</p>
         </div>
 
-        <!-- Display Success or Error Message -->
         <?php echo $message; ?>
 
         <form class="form-card" id="registrationForm" method="POST" action="register.php">
@@ -219,14 +256,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 <div class="form-group">
                     <label>First Name</label>
                     <input type="text" name="first_name" placeholder="John" required>
+                    <div class="error-msg" id="err_first_name"></div>
                 </div>
                 <div class="form-group">
                     <label>Last Name</label>
                     <input type="text" name="last_name" placeholder="Doe" required>
+                    <div class="error-msg" id="err_last_name"></div>
                 </div>
                 <div class="form-group">
                     <label>Date of Birth</label>
                     <input type="date" name="date_of_birth" required>
+                    <div class="error-msg" id="err_dob"></div>
                 </div>
                 <div class="form-group">
                     <label>Gender</label>
@@ -240,10 +280,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                 <div class="form-group">
                     <label>Email Address</label>
                     <input type="email" name="email" placeholder="john@email.com" required>
+                    <div class="error-msg" id="err_email"></div>
                 </div>
                 <div class="form-group">
                     <label>Contact Number</label>
-                    <input type="tel" name="contact" placeholder="+1 (555) 000-0000" required>
+                    <input type="tel" name="contact" placeholder="9800000000" required>
+                    <div class="error-msg" id="err_contact"></div>
                 </div>
                 <div class="form-group full-width">
                     <label>Blood Group (Optional)</label>
@@ -273,6 +315,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             <line x1="1" y1="1" x2="23" y2="23"></line>
                         </svg>
                     </button>
+                    <div class="error-msg" id="err_password"></div>
                 </div>
                 <div class="form-group">
                     <label>Confirm Password</label>
@@ -287,10 +330,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
                             <line x1="1" y1="1" x2="23" y2="23"></line>
                         </svg>
                     </button>
+                    <div class="error-msg" id="err_confirm_password"></div>
                 </div>
-                <div class="button-group">
-                    <button type="button" class="btn btn-outline" onclick="window.location.href='index.php'">Cancel</button>
-                    <button type="submit" name="submit_registration" class="btn btn-solid">Create Account &rarr;</button>
+                <div class="form-actions">
+                    <a href="index.php" class="register-cancel-btn">Cancel</a>
+                    <button type="submit" name="submit_register" class="register-submit-btn">Create Account &rarr;</button>
                 </div>
             </div>
         </form>
@@ -303,63 +347,69 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_registration'])
     const confirmPassword = document.getElementById('confirm_password');
 
     form.addEventListener('submit', function(event) {
-        // 1. Grab all the input values
+        let isValid = true;
+
+        // Reset all error messages first
+        document.querySelectorAll('.error-msg').forEach(el => {
+            el.textContent = '';
+            el.style.display = 'none';
+        });
+
+        // Helper function to show errors smoothly
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            isValid = false;
+        }
+
+        // Grab input values
         const firstName = document.querySelector('input[name="first_name"]').value;
         const lastName = document.querySelector('input[name="last_name"]').value;
         const email = document.querySelector('input[name="email"]').value;
         const phone = document.querySelector('input[name="contact"]').value;
         const dob = document.querySelector('input[name="date_of_birth"]').value;
 
-        // 2. Define Professional Regex Patterns
-        const nameRegex = /^[a-zA-Z\s\-]{2,50}$/; // Only letters, spaces, and hyphens (2 to 50 chars)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Standard email format (e.g., name@domain.com)
-        const phoneRegex = /^[0-9]{10,15}$/; // Strictly 10 to 15 digits, no letters or symbols
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/; // 8 chars, 1 upper, 1 lower, 1 number
+        // Professional Regex Patterns
+        const nameRegex = /^[a-zA-Z\s\-]{2,50}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^[0-9]{10,15}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-        // 3. Validate Names
-        if (!nameRegex.test(firstName) || !nameRegex.test(lastName)) {
-            event.preventDefault();
-            alert("Validation Error: First and Last names can only contain letters and must be at least 2 characters.");
-            return; // Stops the rest of the script from running
+        // Run Validations
+        if (!nameRegex.test(firstName)) {
+            showError('err_first_name', 'Must contain only letters (min 2)');
         }
 
-        // 4. Validate Email
+        if (!nameRegex.test(lastName)) {
+            showError('err_last_name', 'Must contain only letters (min 2)');
+        }
+
         if (!emailRegex.test(email)) {
-            event.preventDefault();
-            alert("Validation Error: Please enter a valid email address format.");
-            return;
+            showError('err_email', 'Please enter a valid email address');
         }
 
-        // 5. Validate Phone Number
         if (!phoneRegex.test(phone)) {
-            event.preventDefault();
-            alert("Validation Error: Contact number must contain only numbers (10 to 15 digits).");
-            return;
+            showError('err_contact', 'Must contain 10-15 digits only');
         }
 
-        // 6. Validate Date of Birth (No time travelers allowed)
         const today = new Date();
         const birthDate = new Date(dob);
         if (birthDate > today) {
-            event.preventDefault();
-            alert("Validation Error: Date of birth cannot be a future date.");
-            return;
+            showError('err_dob', 'Date of birth cannot be in the future');
         }
 
-        // 7. Validate Password Strength
         if (!passwordRegex.test(password.value)) {
-            event.preventDefault();
-            alert("Security Error: Password must be at least 8 characters long, contain one uppercase letter, one lowercase letter, and one number.");
-            password.focus();
-            return;
+            showError('err_password', 'Min 8 chars, 1 uppercase, 1 lowercase, 1 number');
         }
 
-        // 8. Validate Password Match
         if (password.value !== confirmPassword.value) {
+            showError('err_confirm_password', 'Passwords do not match');
+        }
+
+        // Prevent form submission if any validation failed
+        if (!isValid) {
             event.preventDefault();
-            alert("Security Error: Passwords do not match! Please try again.");
-            confirmPassword.focus();
-            return;
         }
     });
 
